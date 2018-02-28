@@ -17,7 +17,7 @@ type Post struct {
 func main() {
 	url := "https://pikabu.ru/profile/boss1w"
 
-	registry := setup()
+	setup()
 
 	doc, err := goquery.NewDocument(url)
 
@@ -39,7 +39,7 @@ func main() {
 		}
 
 
-		savePost(post, registry)
+		savePost(post)
 	})
 
 }
@@ -50,8 +50,8 @@ func convertWin1251ToUtf8(string string) string {
 	return returnedString
 }
 
-func savePost(post Post, registry *registry)  {
-	db := registry.db
+func savePost(post Post)  {
+	db := reg.db
 
 	transaction, err := db.Begin()
 
@@ -68,12 +68,14 @@ func savePost(post Post, registry *registry)  {
 
 	defer stmt.Close()
 
+	/**
 	_, err = stmt.Exec(post.postId, post.author, post.title, post.url)
 
 	if err != nil {
 		panic(err)
 		log.Fatal(err)
 	}
-
+	*/
 	transaction.Commit()
+
 }

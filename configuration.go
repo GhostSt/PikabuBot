@@ -10,42 +10,39 @@ import (
 	"io/ioutil"
 )
 
+var reg =  &registry{}
+
 type registry struct {
 	config *yaml.File
 	db     *sql.DB
 }
 
 // Parses configuration file and sets it to Registry
-func loadConfig(registry *registry) {
+func loadConfig() {
 	file, err := yaml.ReadFile("resources/config.yml")
 
 	if (err != nil) {
 		panic(err)
 	}
 
-	registry.config = file
+	reg.config = file
 }
 
 // Sets up application and initialize Registry
-func setup() *registry {
-	registry := &registry{}
-
-	loadConfig(registry)
-
-	setupDatabase(registry)
-
-	return registry
+func setup() {
+	loadConfig()
+	setupDatabase()
 }
 
 // Sets up connection to database and sets it to Registry and import initial database schema
-func setupDatabase(registry *registry) (error) {
-	version, err := registry.config.Get("database.version")
+func setupDatabase() (error) {
+	version, err := reg.config.Get("database.version")
 
 	if err != nil {
 		return errors.New("Database version doesn't set in configuration")
 	}
 
-	path, err := registry.config.Get("database.path")
+	path, err := reg.config.Get("database.path")
 
 	if err != nil {
 		return errors.New("Database path doesn't set in configuration")
@@ -57,7 +54,7 @@ func setupDatabase(registry *registry) (error) {
 		return errors.New("Database schema doesn't set in configuration")
 	}
 
-	migration_file, err := registry.config.Get("database.schema")
+	migration_file, err := reg.config.Get("database.schema")
 
 	if err != nil {
 		panic(err)
@@ -77,7 +74,7 @@ func setupDatabase(registry *registry) (error) {
 		}
 	}
 
-	registry.db = db
+	reg.db = db
 
 	return nil
 }
