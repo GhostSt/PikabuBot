@@ -5,6 +5,7 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/text/encoding/charmap"
+	"fmt"
 )
 
 type Post struct {
@@ -25,23 +26,35 @@ func main() {
 		log.Fatal(err)
 	}
 
+	posts := []Post{}
+
 	doc.Find("div.story").Each(func(i int, s *goquery.Selection) {
 		storyId, _ := s.Attr("data-story-id")
 		author := s.Find("div.story__author").Text()
 		title := s.Find("div.story__header-title").Text()
 		url, _ := s.Find("div.story__header-title a").Attr("href")
 
-		post := Post{
+		var post = Post{
 			storyId,
 			convertWin1251ToUtf8(author),
 			convertWin1251ToUtf8(title),
 			convertWin1251ToUtf8(url),
 		}
 
-
-		savePost(post)
+		posts = append(posts, post)
 	})
 
+	savePost(posts[0])
+
+	message := "some message"
+
+	res, err := sendMessage(message)
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(res)
 }
 
 func convertWin1251ToUtf8(string string) string {
