@@ -2,26 +2,28 @@ package main
 
 import (
 	"net/http"
+	"net/url"
 	"fmt"
 	"bytes"
 )
 
+// Sends request to Telegram API
 func sendRequest(method string, parameters map[string]string) (*http.Response, error) {
 	var urlBuffer bytes.Buffer
 
-	url, err := reg.config.Get("telegram.url")
+	urlString, err := reg.config.Get("telegram.url")
 
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := reg.config.Get("telegram.token")
+	token, err := reg.env.get("TELEGRAM_BOT_TOKEN")
 
 	if err != nil {
 		return nil, err
 	}
 
-	urlBuffer.WriteString(url)
+	urlBuffer.WriteString(urlString)
 	urlBuffer.WriteString("bot")
 	urlBuffer.WriteString(token)
 	urlBuffer.WriteString("/")
@@ -33,7 +35,10 @@ func sendRequest(method string, parameters map[string]string) (*http.Response, e
 
 	i := 0
 	for key := range parameters {
-		queryParameter := key + "=" + parameters[key]
+		value := parameters[key]
+		value = url.QueryEscape(value)
+
+		queryParameter := key + "=" + value
 
 		queryBuffer.WriteString(queryParameter)
 
@@ -64,8 +69,9 @@ func sendRequest(method string, parameters map[string]string) (*http.Response, e
 	return res, nil
 }
 
+// Sends message by chat by bot
 func sendMessage(message string) (bool, error){
-	chatId, err := reg.config.Get("telegram.chat_id")
+	chatId, err := reg.env.get("TELEGRAM_CHAT_ID")
 
 	if err != nil {
 		return false, err
@@ -78,7 +84,7 @@ func sendMessage(message string) (bool, error){
 	}
 
 	parameters := map[string]string{}
-	parameters["chat_id"] = "-" + chatId
+	parameters["chat_id"] = chatId
 	parameters["text"] = message
 	parameters["parse_mode"] = parseMode
 

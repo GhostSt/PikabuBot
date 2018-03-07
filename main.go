@@ -5,7 +5,9 @@ import (
 
 	"github.com/PuerkitoBio/goquery"
 	"golang.org/x/text/encoding/charmap"
+	"database/sql"
 	"fmt"
+	"regexp"
 )
 
 type Post struct {
@@ -30,9 +32,13 @@ func main() {
 
 	doc.Find("div.story").Each(func(i int, s *goquery.Selection) {
 		storyId, _ := s.Attr("data-story-id")
-		author := s.Find("div.story__author").Text()
-		title := s.Find("div.story__header-title").Text()
+		author := s.Find("a.story__author").Text()
 		url, _ := s.Find("div.story__header-title a").Attr("href")
+
+		title := s.Find("div.story__header-title").Text()
+		clearTitlePattern := regexp.MustCompile(`[\[\]\(\)\n\t]*`)
+
+		title = clearTitlePattern.ReplaceAllString(title, "")
 
 		var post = Post{
 			storyId,
@@ -42,11 +48,29 @@ func main() {
 		}
 
 		posts = append(posts, post)
+		/**
+		postIDPattern := regexp.MustCompile(`^\d+$`)
+
+		fmt.Println(post.postId)
+		if isPostExists(registry.db, post.postId) {
+			return
+		}
+
+		fmt.Println(post)
+		if postIDPattern.MatchString(post.postId) {
+			savePost(post, registry)
+
+			addedPosts++
+		}
+		*/
 	})
 
-	savePost(posts[0])
+	post := posts[0]
+	savePost(post)
+	fmt.Println(post)
 
-	message := "some message"
+	message := fmt.Sprintf("%s: [%s](%s)", post.author, post.title, post.url)
+	fmt.Println(message)
 
 	res, err := sendMessage(message)
 
@@ -76,7 +100,6 @@ func savePost(post Post)  {
 
 	if err != nil {
 		panic(err)
-		log.Fatal(err)
 	}
 
 	defer stmt.Close()
@@ -86,9 +109,24 @@ func savePost(post Post)  {
 
 	if err != nil {
 		panic(err)
-		log.Fatal(err)
 	}
 	*/
 	transaction.Commit()
+}
 
+func isPostExists(db *sql.DB, postId string) bool {
+	rows, err := db.Query("SELECT * FROM post WHERE id = ?", postId);
+	if err != nil {
+		panic(err)
+	}
+
+	var post Post
+
+	for rows.Next() {
+		rows.Scan(post.postId, post.author, post.title, post.url)
+
+		return true
+	}
+
+	return false
 }

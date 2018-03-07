@@ -15,6 +15,7 @@ var reg =  &registry{}
 type registry struct {
 	config *yaml.File
 	db     *sql.DB
+	env    *env
 }
 
 // Parses configuration file and sets it to Registry
@@ -32,6 +33,8 @@ func loadConfig() {
 func setup() {
 	loadConfig()
 	setupDatabase()
+
+	reg.env = &env{}
 }
 
 // Sets up connection to database and sets it to Registry and import initial database schema
