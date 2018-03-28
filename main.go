@@ -8,6 +8,7 @@ import (
 	"database/sql"
 	"fmt"
 	"regexp"
+	"time"
 )
 
 type Post struct {
@@ -17,20 +18,77 @@ type Post struct {
 	url    string
 }
 
+type Collection struct {
+	posts []Post
+}
+
 func main() {
+	collectionChan := make(chan *Collection)
+	parserStopChan := make(chan bool)
+	processorStopChan := make(chan bool)
+	parserFinishChan := make(chan bool)
+
+	go parser(collectionChan, parserStopChan, parserFinishChan)
+	go processor(collectionChan, parserStopChan)
+
+	time.Sleep(5 * time.Second)
+
+	parserStopChan <- true
+	processorStopChan <- true
+}
+
+func parser(colChan chan<- *Collection, parserStopChan <-chan bool, parserFinishChan chan <- bool) {
 	url := "https://pikabu.ru/profile/boss1w"
 
-	setup()
+	for {
+		select {
+		case <-parserStopChan:
+			fmt.Println("stop parser")
 
-	doc, err := goquery.NewDocument(url)
+			parserFinishChan <- true
+
+			return
+		default:
+			collection, err := parseUrl(url)
+
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			colChan <- collection
+
+			time.Sleep(500 * time.Millisecond)
+			fmt.Println("parser finished")
+
+			return
+		}
+	}
+}
+
+func processor(collectionChan <-chan *Collection, processorStopChan <-chan bool) {
+	for {
+		select {
+		case collection := <-collectionChan:
+			fmt.Println(collection)
+		case <-processorStopChan:
+			fmt.Println("stop processor")
+
+			return
+		}
+	}
+}
+
+func parseUrl(url string) (*Collection, error)  {
+	posts := []Post{}
+
+	document, err := goquery.NewDocument(url)
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	posts := []Post{}
-
-	doc.Find("div.story").Each(func(i int, s *goquery.Selection) {
+	fmt.Println(url)
+	document.Find("div.story").Each(func(i int, s *goquery.Selection) {
 		storyId, _ := s.Attr("data-story-id")
 		author := s.Find("a.story__author").Text()
 		url, _ := s.Find("div.story__header-title a").Attr("href")
@@ -48,25 +106,18 @@ func main() {
 		}
 
 		posts = append(posts, post)
-		/**
-		postIDPattern := regexp.MustCompile(`^\d+$`)
-
-		fmt.Println(post.postId)
-		if isPostExists(registry.db, post.postId) {
-			return
-		}
-
-		fmt.Println(post)
-		if postIDPattern.MatchString(post.postId) {
-			savePost(post, registry)
-
-			addedPosts++
-		}
-		*/
 	})
 
-	post := posts[0]
+	return &Collection{posts: posts}, nil
+}
+func main1() {
+
+	setup()
+
+	post := Post{}
+
 	savePost(post)
+
 	fmt.Println(post)
 
 	message := fmt.Sprintf("%s: [%s](%s)", post.author, post.title, post.url)
@@ -87,7 +138,7 @@ func convertWin1251ToUtf8(string string) string {
 	return returnedString
 }
 
-func savePost(post Post)  {
+func savePost(post Post) {
 	db := reg.db
 
 	transaction, err := db.Begin()
