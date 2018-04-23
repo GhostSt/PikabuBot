@@ -23,29 +23,37 @@ type Collection struct {
 }
 
 func main() {
-	collectionChan := make(chan *Collection)
-	parserStopChan := make(chan bool)
-	processorStopChan := make(chan bool)
-	parserFinishChan := make(chan bool)
+	fmt.Println("start...")
+	collection := make(chan *Collection)
+	parserDone := make(chan bool)
+	processorDone := make(chan bool)
 
-	go parser(collectionChan, parserStopChan, parserFinishChan)
-	go processor(collectionChan, parserStopChan)
+	go parser(collection, parserDone)
+	go processor(collection, processorDone)
 
 	time.Sleep(5 * time.Second)
 
-	parserStopChan <- true
-	processorStopChan <- true
+	fmt.Println("try to stop parser")
+	parserDone <- true
+
+	fmt.Println("try to stop processor")
+	processorDone <- true
+
+	time.Sleep(1 * time.Second)
+	close(processorDone)
 }
 
-func parser(colChan chan<- *Collection, parserStopChan <-chan bool, parserFinishChan chan <- bool) {
+func parser(colChan chan <- *Collection, done <- chan bool) {
 	url := "https://pikabu.ru/profile/boss1w"
 
 	for {
 		select {
-		case <-parserStopChan:
-			fmt.Println("stop parser")
+		case <- done:
+			fmt.Println("parser done")
 
-			parserFinishChan <- true
+			close(colChan)
+
+			time.Sleep(250 * time.Millisecond)
 
 			return
 		default:
@@ -58,9 +66,8 @@ func parser(colChan chan<- *Collection, parserStopChan <-chan bool, parserFinish
 			colChan <- collection
 
 			time.Sleep(500 * time.Millisecond)
-			fmt.Println("parser finished")
 
-			return
+			fmt.Println("message sent")
 		}
 	}
 }
@@ -69,9 +76,11 @@ func processor(collectionChan <-chan *Collection, processorStopChan <-chan bool)
 	for {
 		select {
 		case collection := <-collectionChan:
-			fmt.Println(collection)
+			if nil != collection {
+				fmt.Println(collection)
+			}
 		case <-processorStopChan:
-			fmt.Println("stop processor")
+			fmt.Println("processor done")
 
 			return
 		}
@@ -87,10 +96,9 @@ func parseUrl(url string) (*Collection, error)  {
 		log.Fatal(err)
 	}
 
-	fmt.Println(url)
-	document.Find("div.story").Each(func(i int, s *goquery.Selection) {
+	document.Find("article.story").Each(func(i int, s *goquery.Selection) {
 		storyId, _ := s.Attr("data-story-id")
-		author := s.Find("a.story__author").Text()
+		author := s.Find("a.user__nick").Text()
 		url, _ := s.Find("div.story__header-title a").Attr("href")
 
 		title := s.Find("div.story__header-title").Text()
@@ -98,6 +106,7 @@ func parseUrl(url string) (*Collection, error)  {
 
 		title = clearTitlePattern.ReplaceAllString(title, "")
 
+		fmt.Println(title)
 		var post = Post{
 			storyId,
 			convertWin1251ToUtf8(author),

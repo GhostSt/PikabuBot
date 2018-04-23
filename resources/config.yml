@@ -9,3 +9,6 @@ telegram:
     token: some token
     send_message:
         parse_mode: Markdown
+
+site:
+    url: https://pikabu.ru/profile/
