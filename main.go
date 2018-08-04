@@ -7,6 +7,13 @@ import (
 	"log"
 )
 
+var registry *Registry
+
+func init() {
+	registry = CreateRegistry()
+	registry.setup()
+}
+
 func main() {
 	app := cli2.NewApp()
 	app.EnableBashCompletion = true
@@ -22,12 +29,14 @@ func main() {
 					Usage: "Rolls migrations",
 					Flags: []cli2.Flag{
 						cli2.IntFlag{
-							Name: "count, c",
+							Name: "count",
 							Usage: "Rolls certain quantity of migration",
 						},
 					},
 					Action: func(c *cli2.Context) error {
-						println("Migrations migrate")
+ 						fmt.Println(c.Args())
+						migrationManager := CreateMigrationManager()
+						migrationManager.Migrate()
 
 						return nil
 					},
@@ -42,7 +51,8 @@ func main() {
 						},
 					},
 					Action: func(c *cli2.Context) error {
-						println("Migrations rollback")
+						migrationManager := CreateMigrationManager()
+						migrationManager.Rollback()
 
 						return nil
 					},

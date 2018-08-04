@@ -11,13 +11,13 @@ import (
 func sendRequest(method string, parameters map[string]string) (*http.Response, error) {
 	var urlBuffer bytes.Buffer
 
-	urlString, err := reg.config.Get("telegram.url")
+	urlString, err := registry.config.Get("telegram.url")
 
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := reg.env.get("TELEGRAM_BOT_TOKEN")
+	token, err := registry.env.get("TELEGRAM_BOT_TOKEN")
 
 	if err != nil {
 		return nil, err
@@ -71,13 +71,13 @@ func sendRequest(method string, parameters map[string]string) (*http.Response, e
 
 // Sends message by chat by bot
 func sendMessage(message string) (bool, error){
-	chatId, err := reg.env.get("TELEGRAM_CHAT_ID")
+	chatId, err := registry.env.get("TELEGRAM_CHAT_ID")
 
 	if err != nil {
 		return false, err
 	}
 
-	parseMode, err := reg.config.Get("telegram.send_message.parse_mode")
+	parseMode, err := registry.config.Get("telegram.send_message.parse_mode")
 
 	if err != nil {
 		return false, err

@@ -1,7 +1,7 @@
 database:
-    version: sqlite3
-    path: resources/db.sqlite
-    schema: resources/migration.sql
+    name: pikabubot
+    username: Admin_core
+    password: core
 
 telegram:
     url: https://api.telegram.org/
@@ -9,3 +9,6 @@ telegram:
     token: some token
     send_message:
         parse_mode: Markdown
+
+migrations:
+    path: /var/go/src/PikabuBot/resources/migrations
