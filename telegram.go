@@ -1,16 +1,22 @@
-package main
+package bot
 
 import (
 	"net/http"
 	"net/url"
-	"fmt"
 	"bytes"
 )
 
-// Sends request to Telegram API
-func sendRequest(method string, parameters map[string]string) (*http.Response, error) {
-	var urlBuffer bytes.Buffer
+type Telegram struct {
+	Client    client
+	Address   string
+	Token     string
+	ChatId    string
+	ParseMode string
+}
 
+// Initializes Telegram structure
+func Init() (*Telegram, error) {
+	/**
 	urlString, err := reg.config.Get("telegram.url")
 
 	if err != nil {
@@ -19,48 +25,71 @@ func sendRequest(method string, parameters map[string]string) (*http.Response, e
 
 	token, err := reg.env.get("TELEGRAM_BOT_TOKEN")
 
+	chatId, err := reg.env.get("TELEGRAM_CHAT_ID")
+
 	if err != nil {
 		return nil, err
 	}
 
-	urlBuffer.WriteString(urlString)
+	parseMode, err := reg.config.Get("telegram.send_message.parse_mode")
+
+	if err != nil {
+		return nil, err
+	}
+
+	if err != nil {
+		return nil, err
+	}
+	*/
+
+	urlString := "123"
+	token := "token"
+	chatId := "chat"
+	parseMode := "parseMode"
+
+	telegram := &Telegram{
+		&Client{},
+		urlString,
+		token,
+		chatId,
+		parseMode,
+	}
+
+	return telegram, nil
+}
+
+// Creates url to send request
+func (t *Telegram) createUrl(method string, parameters map[string]string) string {
+	var urlBuffer bytes.Buffer
+
+	urlBuffer.WriteString(t.Address)
 	urlBuffer.WriteString("bot")
-	urlBuffer.WriteString(token)
+	urlBuffer.WriteString(t.Token)
 	urlBuffer.WriteString("/")
 	urlBuffer.WriteString(method)
 
-	var queryBuffer bytes.Buffer
-
-	parametersCount := len(parameters)
-
 	i := 0
-	for key := range parameters {
-		value := parameters[key]
+	for key, value := range parameters {
+		if i == 0 {
+			urlBuffer.WriteString("?")
+		} else {
+			urlBuffer.WriteString("&")
+		}
+
 		value = url.QueryEscape(value)
 
-		queryParameter := key + "=" + value
-
-		queryBuffer.WriteString(queryParameter)
-
-		if i != parametersCount - 1 {
-			queryBuffer.WriteString("&")
-		}
+		urlBuffer.WriteString(key + "=" + value)
 
 		i++
 	}
 
-	urlBuffer.WriteString("?")
-	urlBuffer.Write(queryBuffer.Bytes())
+	return urlBuffer.String()
+}
 
-	fmt.Println(urlBuffer.String())
-
-	requestUrl := urlBuffer.String()
-
-	req, _ := http.NewRequest("POST", requestUrl, nil)
-
-	client := &http.Client{}
-
-	res, err := client.Do(req)
+// Sends request to Telegram API
+func (t *Telegram) sendRequest(method string, parameters map[string]string) (*http.Response, error) {
+	url := t.createUrl(method, parameters)
+	res, err := t.Client.SendRequest("POST", url, nil)
 
 	if err != nil {
 		panic(err)
@@ -70,29 +99,18 @@ func sendRequest(method string, parameters map[string]string) (*http.Response, e
 }
 
 // Sends message by chat by bot
-func sendMessage(message string) (bool, error){
-	chatId, err := reg.env.get("TELEGRAM_CHAT_ID")
-
-	if err != nil {
-		return false, err
-	}
-
-	parseMode, err := reg.config.Get("telegram.send_message.parse_mode")
-
-	if err != nil {
-		return false, err
-	}
+func (t *Telegram) SendMessage(message string) (bool, error) {
 
 	parameters := map[string]string{}
-	parameters["chat_id"] = chatId
+	parameters["chat_id"] = t.ChatId
 	parameters["text"] = message
-	parameters["parse_mode"] = parseMode
+	parameters["parse_mode"] = t.ParseMode
 
-	fmt.Println(parameters)
+	_, err := t.sendRequest("sendMessage", parameters)
 
-	response, err := sendRequest("sendMessage", parameters)
-
-	fmt.Println(response)
+	if err != nil {
+		panic(err)
+	}
 
 	return true, nil
 }

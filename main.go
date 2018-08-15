@@ -1,4 +1,4 @@
-package main
+package bot
 
 import (
 	"log"
@@ -72,13 +72,15 @@ func main() {
 	message := fmt.Sprintf("%s: [%s](%s)", post.author, post.title, post.url)
 	fmt.Println(message)
 
-	res, err := sendMessage(message)
+	/**
+	res, err := t.sendMessage(message)
 
 	if err != nil {
 		panic(err)
 	}
 
 	fmt.Println(res)
+	*/
 }
 
 func convertWin1251ToUtf8(string string) string {
