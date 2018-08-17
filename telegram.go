@@ -20,37 +20,30 @@ type ParameterBag struct {
 }
 
 // Initializes Telegram structure
-func Init() (*Telegram, error) {
-	/**
-	urlString, err := reg.config.Get("telegram.url")
+func Init(registry *Registry) (*Telegram, error) {
+	urlString, err := registry.config.Get("telegram.url")
 
 	if err != nil {
 		return nil, err
 	}
 
-	token, err := reg.env.get("TELEGRAM_BOT_TOKEN")
-
-	chatId, err := reg.env.get("TELEGRAM_CHAT_ID")
+	token, err := registry.env.get("TELEGRAM_BOT_TOKEN")
 
 	if err != nil {
 		return nil, err
 	}
 
-	parseMode, err := reg.config.Get("telegram.send_message.parse_mode")
+	chatId, err := registry.env.get("TELEGRAM_CHAT_ID")
 
 	if err != nil {
 		return nil, err
 	}
 
+	parseMode, err := registry.config.Get("telegram.send_message.parse_mode")
+
 	if err != nil {
 		return nil, err
 	}
-	*/
-
-	urlString := "123"
-	token := "token"
-	chatId := "chat"
-	parseMode := "parseMode"
 
 	telegram := &Telegram{
 		&Client{},
