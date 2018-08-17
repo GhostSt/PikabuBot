@@ -14,6 +14,11 @@ type Telegram struct {
 	ParseMode string
 }
 
+type ParameterBag struct {
+	key   string
+	value string
+}
+
 // Initializes Telegram structure
 func Init() (*Telegram, error) {
 	/**
@@ -59,7 +64,7 @@ func Init() (*Telegram, error) {
 }
 
 // Creates url to send request
-func (t *Telegram) createUrl(method string, parameters map[string]string) string {
+func (t *Telegram) createUrl(method string, parameters []*ParameterBag) string {
 	var urlBuffer bytes.Buffer
 
 	urlBuffer.WriteString(t.Address)
@@ -69,16 +74,17 @@ func (t *Telegram) createUrl(method string, parameters map[string]string) string
 	urlBuffer.WriteString(method)
 
 	i := 0
-	for key, value := range parameters {
+	for _, parameter := range parameters {
+
 		if i == 0 {
 			urlBuffer.WriteString("?")
 		} else {
 			urlBuffer.WriteString("&")
 		}
 
-		value = url.QueryEscape(value)
+		value := url.QueryEscape(parameter.value)
 
-		urlBuffer.WriteString(key + "=" + value)
+		urlBuffer.WriteString(parameter.key + "=" + value)
 
 		i++
 	}
@@ -87,7 +93,7 @@ func (t *Telegram) createUrl(method string, parameters map[string]string) string
 }
 
 // Sends request to Telegram API
-func (t *Telegram) sendRequest(method string, parameters map[string]string) (*http.Response, error) {
+func (t *Telegram) sendRequest(method string, parameters []*ParameterBag) (*http.Response, error) {
 	url := t.createUrl(method, parameters)
 	res, err := t.Client.SendRequest("POST", url, nil)
 
@@ -101,12 +107,13 @@ func (t *Telegram) sendRequest(method string, parameters map[string]string) (*ht
 // Sends message by chat by bot
 func (t *Telegram) SendMessage(message string) (bool, error) {
 
-	parameters := map[string]string{}
-	parameters["chat_id"] = t.ChatId
-	parameters["text"] = message
-	parameters["parse_mode"] = t.ParseMode
+	chat := &ParameterBag{"chat_id", t.ChatId}
+	text := &ParameterBag{"text", message}
+	parseMode := &ParameterBag{"parse_mode", t.ParseMode}
 
-	_, err := t.sendRequest("sendMessage", parameters)
+	parameters := [...]*ParameterBag{chat, text, parseMode}
+
+	_, err := t.sendRequest("sendMessage", parameters[:])
 
 	if err != nil {
 		panic(err)
