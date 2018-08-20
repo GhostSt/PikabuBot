@@ -9,12 +9,14 @@ import (
 
 var registry *Registry
 
-func init() {
+func initialize() {
 	registry = CreateRegistry()
 	registry.setup()
 }
 
 func main() {
+	initialize()
+
 	app := cli2.NewApp()
 	app.EnableBashCompletion = true
 	app.Usage = "PikabuBot - tool to collect posts"

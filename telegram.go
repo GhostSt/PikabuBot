@@ -19,8 +19,8 @@ type ParameterBag struct {
 	value string
 }
 
-// Initializes Telegram structure
-func Init(registry *Registry) (*Telegram, error) {
+// create Telegram object
+func CreateTelegram(registry *Registry) (*Telegram, error) {
 	urlString, err := registry.config.Get("telegram.url")
 
 	if err != nil {
