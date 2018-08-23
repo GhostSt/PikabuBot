@@ -12,3 +12,6 @@ telegram:
 
 migrations:
     path: /var/go/src/PikabuBot/resources/migrations
+
+logger:
+    type: syslog

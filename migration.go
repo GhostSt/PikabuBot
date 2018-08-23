@@ -1,4 +1,4 @@
-package bot
+package main
 
 import (
 	"github.com/golang-migrate/migrate"
